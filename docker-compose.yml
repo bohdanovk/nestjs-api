@@ -1,0 +1,32 @@
+version: '3.3'
+
+services:
+  dev:
+    container_name: server-dev
+    build:
+      context: .
+    env_file:
+      - .development.env
+    ports:
+      - '9000:9000'
+      - '9229:9229'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    env_file:
+      - .development.env
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - '27017:27017'
+    restart: unless-stopped
+
+volumes:
+  mongodata:
