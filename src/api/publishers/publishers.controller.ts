@@ -55,11 +55,11 @@ export class PublishersController {
   }
 
   @ApiOperation({ summary: 'Update the publisher by ID' })
-  @ApiResponse({ status: 200, type: Publisher })
+  @ApiResponse({ status: HttpStatus.OK, type: Publisher })
   @Put(':id')
   updatePublisher(
-    @Body() publisherDto: UpdatePublisherDto,
     @Param('id', ParseObjectIdPipe) id: string,
+    @Body() publisherDto: UpdatePublisherDto,
   ): Promise<Publisher> {
     return this.publishersService.update(id, publisherDto);
   }

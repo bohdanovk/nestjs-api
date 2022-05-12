@@ -46,40 +46,6 @@ export class GamesService {
     return game?.publisher;
   }
 
-  async removeMany({
-    dateTill,
-  }: {
-    dateTill: Date;
-  }): Promise<{ acknowledged: boolean; deletedCount: number }> {
-    return this.gameModel
-      .deleteMany({
-        releaseDate: {
-          $lte: dateTill,
-        },
-      })
-      .exec();
-  }
-
-  async applyDiscount(
-    discount: number,
-    { dateFrom, dateTill }: { dateFrom?: Date; dateTill?: Date },
-  ): Promise<Game[]> {
-    const games = this.gameModel.find({
-      releaseDate: {
-        $gte: dateFrom,
-        $lte: dateTill,
-      },
-    });
-
-    for await (const game of games) {
-      game.price = game.price - (game.price / 100) * discount;
-
-      await game.save();
-    }
-
-    return games;
-  }
-
   async apocalypse(): Promise<{
     removed: number;
     discountApplied: Game[];
@@ -100,12 +66,50 @@ export class GamesService {
     return { removed: removedGames.deletedCount, discountApplied };
   }
 
+  private async removeMany({
+    dateTill,
+  }: {
+    dateTill: Date;
+  }): Promise<{ acknowledged: boolean; deletedCount: number }> {
+    return this.gameModel
+      .deleteMany({
+        releaseDate: {
+          $lte: dateTill,
+        },
+      })
+      .exec();
+  }
+
+  private async applyDiscount(
+    discount: number,
+    { dateFrom, dateTill }: { dateFrom?: Date; dateTill?: Date },
+  ): Promise<Game[]> {
+    const games = this.gameModel.find({
+      releaseDate: {
+        $gte: dateFrom,
+        $lte: dateTill,
+      },
+    });
+
+    for await (const game of games) {
+      game.price = game.price - (game.price / 100) * discount;
+
+      await game.save();
+    }
+
+    return games;
+  }
+
   private async processGameDto(
     gameDto: CreateGameDto | UpdateGameDto,
   ): Promise<(CreateGameDto | UpdateGameDto) & { publisher?: Publisher }> {
-    const publisher = await this.publisherService.getById(gameDto.publisherId);
+    if (gameDto.publisherId) {
+      const publisher = await this.publisherService.getById(
+        gameDto.publisherId,
+      );
 
-    if (publisher) return { ...gameDto, publisher };
+      if (publisher) return { ...gameDto, publisher };
+    }
 
     return gameDto;
   }

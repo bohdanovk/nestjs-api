@@ -53,11 +53,11 @@ export class GamesController {
   }
 
   @ApiOperation({ summary: 'Update the game by ID' })
-  @ApiResponse({ status: 200, type: Game })
+  @ApiResponse({ status: HttpStatus.OK, type: Game })
   @Put(':id')
   updateGame(
-    @Body() gameDto: UpdateGameDto,
     @Param('id', ParseObjectIdPipe) id: string,
+    @Body() gameDto: UpdateGameDto,
   ): Promise<Game> {
     return this.gamesService.update(id, gameDto);
   }
