@@ -1,24 +1,57 @@
-import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
-import { GamesModule } from './api/games/games.module';
-import { PublishersModule } from './api/publishers/publishers.module';
+import { AppConfig, ConfigModule } from './config/index.js';
+import { GamesModule } from './modules/games/index.js';
+import { HealthModule } from './modules/health/index.js';
+import { AccessTokenGuard, IamModule } from './modules/iam/index.js';
+import { PublishersModule } from './modules/publishers/index.js';
+import {
+  LoggingModule,
+  MongoModule,
+  SharedInfrastructureModule,
+} from './shared/infrastructure/index.js';
+import {
+  ProblemDetailsFilter,
+  RolesGuard,
+  StrictSchemaValidationPipe,
+} from './shared/presentation/index.js';
 
-const Config = ConfigModule.forRoot({
-  envFilePath: `.${process.env.NODE_ENV}.env`,
-});
-
+/**
+ * Composition root. Cross-cutting behaviour is wired here, in execution order:
+ * rate limiting -> authentication -> authorisation -> schema validation -> handler.
+ */
 @Module({
   imports: [
-    Config,
-    MongooseModule.forRoot(
-      `mongodb://${process.env.MONGODB_URL || 'localhost'}:27017/${
-        process.env.MONGODB_DATABASE
-      }`,
-    ),
-    GamesModule,
+    ConfigModule,
+    LoggingModule,
+    SharedInfrastructureModule,
+    MongoModule,
+    ThrottlerModule.forRootAsync({
+      imports: [],
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: seconds(config.throttle.ttlSeconds),
+            limit: config.throttle.limit,
+          },
+        ],
+      }),
+    }),
+    HealthModule,
+    IamModule,
     PublishersModule,
+    GamesModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: AccessTokenGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_PIPE, useClass: StrictSchemaValidationPipe },
+    { provide: APP_FILTER, useClass: ProblemDetailsFilter },
   ],
 })
 export class AppModule {}
