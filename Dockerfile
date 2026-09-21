@@ -20,7 +20,7 @@ WORKDIR /app
 FROM base AS prod-deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile
+    pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # ---------------------------------------------------------------------------
 # Build (all dependencies, type-check, SWC transpile)
