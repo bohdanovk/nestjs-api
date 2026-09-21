@@ -1,0 +1,12 @@
+# pnpm settings (pnpm >= 10 reads package-manager settings from this file)
+
+# Install scripts are opt-in (supply-chain hardening). Only these packages may run them.
+allowBuilds:
+  '@scarf/scarf': false
+  '@swc/core': true
+  argon2: true
+  mongodb-memory-server: true
+  unrs-resolver: true
+
+# Refuse to install packages published less than 24 hours ago (supply-chain hardening).
+minimumReleaseAge: 1440

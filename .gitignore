@@ -1,35 +1,24 @@
-# compiled output
-/dist
-/node_modules
+# Dependencies
+node_modules/
 
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+# Build output
+dist/
+*.tsbuildinfo
 
-# OS
-.DS_Store
+# Environment
+.env
+.env.*
+!.env.example
 
 # Tests
-/coverage
-/.nyc_output
+coverage/
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# Logs
+*.log
+logs/
 
-# IDE - VSCode
+# OS / editors
+.DS_Store
+.idea/
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-.vscode/extensions.json
+!.vscode/extensions.json

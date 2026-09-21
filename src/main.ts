@@ -1,25 +1,32 @@
+import 'reflect-metadata';
+
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 
-import { AppModule } from './app.module';
-import { ValidationPipe } from './pipes/validation.pipe';
+import { AppModule } from './app.module.js';
+import { configureApp, DOCS_PATH, setupSwagger } from './app.setup.js';
+import { AppConfig } from './config/index.js';
 
-async function start(): Promise<void> {
-  const PORT = process.env.PORT || 9000;
-  const app = await NestFactory.create(AppModule);
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  const config = app.get(AppConfig);
 
-  const config = new DocumentBuilder()
-    .setTitle('Coding backend test')
-    .setVersion('1.0.0')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('/api/docs', app, document);
+  configureApp(app, config);
+  if (config.app.swaggerEnabled) {
+    setupSwagger(app);
+  }
 
-  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(config.app.port);
 
-  await app.listen(PORT, () =>
-    console.log(`Server started on port ${PORT} 🚀`),
-  );
+  const logger = new Logger('Bootstrap');
+  logger.log(`Listening on http://localhost:${config.app.port} (${config.app.env})`);
+  if (config.app.swaggerEnabled) {
+    logger.log(`API docs at http://localhost:${config.app.port}/${DOCS_PATH}`);
+  }
 }
 
-start();
+bootstrap().catch((error: unknown) => {
+  new Logger('Bootstrap').error(error instanceof Error ? (error.stack ?? error.message) : error);
+  process.exitCode = 1;
+});
